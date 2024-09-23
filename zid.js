@@ -1,1 +1,4 @@
-console.log('Test script for Zid');
+(function() {
+    // Your JavaScript content
+    console.log('Test script for Zid');
+})();
