@@ -10,7 +10,7 @@ const $f66fdc2e8eaf2d73$export$88f1fdfae738af54 = ({ deleteParams: deleteParams,
     if (deleteParams) for (const key of deleteParams)params.delete(key);
     if (addParams) for (const [key, value] of addParams)params.append(key, value);
     if (updateParams) for (const [key, value] of updateParams)params.set(key, value);
-    url.search = params.toString();
+    url.search = decodeURIComponent(params).toString();
     return url;
 };
 function $f66fdc2e8eaf2d73$var$stringToHTML(str) {
@@ -442,6 +442,12 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
             (0, $f66fdc2e8eaf2d73$export$d8a0fc79d6aedf2e)(label, `<div><span>${value} </span> <span> (${count})</span></div>`);
         });
     };
+    function extractOptionNameIfValid(str) {
+        if (str.startsWith("attribute_values")) {
+            const match = str.match(/\[(.*?)\]/);
+            return match ? match[1] : null;
+        }
+    }
     const getFiltersParams = ()=>{
         const queryParams = (0, $f66fdc2e8eaf2d73$export$e2de15bbd9edf9c6)();
         const obj = {};
@@ -452,17 +458,20 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
         });
         const options = [];
         for (const [key, value] of queryParams){
-            const values = value.split(",");
-            let obj = {
-                name: key,
-                choices: values.map((v, i)=>({
-                        choice: v,
-                        ...i === values.length - 1 ? {
-                            last_choice: true
-                        } : {}
-                    }))
-            };
-            options.push(obj);
+            const validOptionName = extractOptionNameIfValid(key);
+            if (validOptionName) {
+                const values = value.split(",");
+                let obj = {
+                    name: validOptionName,
+                    choices: values.map((v, i)=>({
+                            choice: v,
+                            ...i === values.length - 1 ? {
+                                last_choice: true
+                            } : {}
+                        }))
+                };
+                options.push(obj);
+            }
         }
         if (options.length) options[options.length - 1] = {
             ...options[options.length - 1],
@@ -491,7 +500,8 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
             });
             window.location = url;
         };
-        const handleFilterChange = (name, value, checked)=>{
+        const handleFilterChange = (nameee, value, checked)=>{
+            const name = `attribute_values[${nameee}]`;
             const currentValue = queryParams.get(name);
             let valueArr = currentValue ? currentValue.split(",") : [];
             if (!checked) valueArr = valueArr.filter((ele)=>ele != value);
@@ -531,7 +541,7 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
         const filteredFilters = options.map((option)=>{
             const filterTitle = option.key;
             const filterCount = option.doc_count;
-            const urlValue = queryParams.get(filterTitle);
+            const urlValue = queryParams.get(`attribute_values[${filterTitle}]`);
             const filterOptions = option.buckets.map((o)=>({
                     type: "checkbox",
                     id: o.key,
