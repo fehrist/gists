@@ -870,7 +870,7 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
         });
         const autocompleteResultsNode = document.getElementById(AUTOCOMPLETE_CONTAINER_ID);
         // NO RESULTS
-        if (!keywords?.length) {
+        if (!keywords?.length && !products?.length && !categories?.length) {
             autocompleteResultsNode.innerHTML = (0, $9ea3a24d21594cd9$export$4ecf3d552dae87fb).getAutocompleteNoResults({
                 language: language
             });
