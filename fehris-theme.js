@@ -726,11 +726,11 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
         const container = document.getElementById(containerId);
         let fromValue = initialQueryParams[(0, $8c7805431dea922a$export$e0ccd3062f6ffe3d).FROM_PRICE];
         let toValue = initialQueryParams[(0, $8c7805431dea922a$export$e0ccd3062f6ffe3d).To_PRICE];
-        const PRICE_CONTAINER_ID = "fehrisPriceContainer";
-        const PRICE_ERROR_ID = "fehrisPriceError";
-        const FROM_CONTAINER_ID = "fehrisPriceFrom";
-        const TO_CONTAINER_ID = "fehrisPriceTo";
-        const PRICE_ACTIONS_CONTAINER = "fehrisPriceActionsContainer";
+        const PRICE_CONTAINER_ID = `fehrisPriceContainer-${getRandomNumber()}`;
+        const PRICE_ERROR_ID = `fehrisPriceError-${getRandomNumber()}`;
+        const FROM_CONTAINER_ID = `fehrisPriceFrom-${getRandomNumber()}`;
+        const TO_CONTAINER_ID = `fehrisPriceTo-${getRandomNumber()}`;
+        const PRICE_ACTIONS_CONTAINER = `fehrisPriceActionsContainer-${getRandomNumber()}`;
         const priceHTML = (0, $9ea3a24d21594cd9$export$8bf845e2f4b482c7).getPriceContainer({
             fromId: FROM_CONTAINER_ID,
             toId: TO_CONTAINER_ID,
