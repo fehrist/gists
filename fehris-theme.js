@@ -708,6 +708,14 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
    */ const appendFilterToElement = ({ language: language, containerId: containerId, filter: filter })=>{
         const container = document.getElementById(containerId);
         const { filters: filters, categories: categories } = formatFiltersResults(filter);
+        console.log(filters);
+        console.log(filters.sort(function(a, b) {
+            var keyA = a.filterTitle, keyB = b.filterTitle;
+            // Compare the 2 dates
+            if (keyA > keyB) return -1;
+            if (keyA < keyB) return 1;
+            return 0;
+        }));
         // const { categories } = formatFiltersResults(postFilter);
         if (!filters.length && !categories.length) container.append((0, $4034d5d0b756f7c9$export$633e2868f66ac64c)("noResults", language));
         if (categories.length > 0) {
