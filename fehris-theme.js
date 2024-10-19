@@ -419,8 +419,11 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
     const initialQueryParams = (0, $f66fdc2e8eaf2d73$export$a1c95a8abb4ece3a)();
     const createFilterInputs = (element, inputs, handleChange)=>{
         const targetElement = document.getElementById(element);
+        console.log({
+            inputs: inputs
+        });
         inputs.forEach((inputInfo)=>{
-            const { type: type, name: name, id: id, value: value, checked: checked, count: count, onChange: onChange } = inputInfo;
+            const { type: type, name: name, id: id, value: value, inputLabel: inputLabel, checked: checked, count: count, onChange: onChange } = inputInfo;
             const changeFn = handleChange || onChange;
             const input = document.createElement("input");
             input.type = type;
@@ -429,7 +432,7 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
             input.value = value;
             input.checked = checked || false;
             input.addEventListener("change", function() {
-                changeFn(input.name, input.id, input.checked);
+                changeFn(input.name, input.value, input.checked);
             });
             // Create a label for the input
             const label = document.createElement("label");
@@ -439,7 +442,7 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
             targetElement.appendChild(label);
             label.appendChild(input);
             (0, $f66fdc2e8eaf2d73$export$d8a0fc79d6aedf2e)(label, '<span class="check"></span>');
-            (0, $f66fdc2e8eaf2d73$export$d8a0fc79d6aedf2e)(label, `<div><span>${value} </span> <span> (${count})</span></div>`);
+            (0, $f66fdc2e8eaf2d73$export$d8a0fc79d6aedf2e)(label, `<div><span>${inputLabel} </span> <span> (${count})</span></div>`);
         });
     };
     function extractOptionNameIfValid(str) {
@@ -482,6 +485,7 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
             options: options.length ? options : undefined
         };
     };
+    const getRandomNumber = (max = 100)=>Math.floor(Math.random() * max);
     const formatFiltersResults = (data)=>{
         const options = data?.options;
         const categories = data?.categories;
@@ -490,7 +494,7 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
             const url = (0, $f66fdc2e8eaf2d73$export$88f1fdfae738af54)({
                 updateParams: [
                     [
-                        "category",
+                        (0, $8c7805431dea922a$export$e0ccd3062f6ffe3d).CATEGORY,
                         value
                     ]
                 ],
@@ -500,8 +504,8 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
             });
             window.location = url;
         };
-        const handleFilterChange = (nameee, value, checked)=>{
-            const name = `attribute_values[${nameee}]`;
+        const handleFilterChange = (facetName, value, checked)=>{
+            const name = `attribute_values[${facetName}]`;
             const currentValue = queryParams.get(name);
             let valueArr = currentValue ? currentValue.split(",") : [];
             if (!checked) valueArr = valueArr.filter((ele)=>ele != value);
@@ -524,17 +528,18 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
             });
             window.location = url;
         };
+        const categoryNameSuffix = getRandomNumber();
         const filteredCategories = categories.map((category)=>{
             const id = category.key;
-            const value = category.name;
             const checked = queryParams.get("category") === id ? true : false;
             return {
                 type: "radio",
-                id: id,
-                value: value,
-                name: "category",
+                id: `${id}${getRandomNumber()}`,
+                value: category.key,
+                name: `category-${categoryNameSuffix}`,
                 count: category.doc_count,
                 checked: checked,
+                inputLabel: category.name,
                 onChange: handleCategoryChange
             };
         });
@@ -544,10 +549,11 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
             const urlValue = queryParams.get(`attribute_values[${filterTitle}]`);
             const filterOptions = option.buckets.map((o)=>({
                     type: "checkbox",
-                    id: o.key,
+                    id: `${o.key}${getRandomNumber()}`,
                     value: o.key,
                     name: filterTitle,
                     count: o.doc_count,
+                    inputLabel: o.key,
                     checked: urlValue ? urlValue.includes(o.key) : false,
                     onChange: handleFilterChange
                 }));
@@ -706,12 +712,12 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
         if (!filters.length && !categories.length) container.append((0, $4034d5d0b756f7c9$export$633e2868f66ac64c)("noResults", language));
         if (categories.length > 0) {
             const titleString = (0, $4034d5d0b756f7c9$export$633e2868f66ac64c)("categories", language);
-            const FILTERS_CATEGORIES_ID = "filtersCategoris";
+            const FILTERS_CATEGORIES_ID = `${containerId}-filtersCategories`;
             (0, $f66fdc2e8eaf2d73$export$d8a0fc79d6aedf2e)(container, (0, $9ea3a24d21594cd9$export$3bf9b68e29fed608).getFilterSection(FILTERS_CATEGORIES_ID, titleString));
             createFilterInputs(FILTERS_CATEGORIES_ID, categories);
         }
         filters.map((ele, i)=>{
-            const id = `options-${i}`;
+            const id = `${containerId}-options-${i}`;
             (0, $f66fdc2e8eaf2d73$export$d8a0fc79d6aedf2e)(container, (0, $9ea3a24d21594cd9$export$3bf9b68e29fed608).getFilterSection(id, ele.filterTitle));
             createFilterInputs(id, ele.filterOptions);
         });
