@@ -708,14 +708,6 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
    */ const appendFilterToElement = ({ language: language, containerId: containerId, filter: filter })=>{
         const container = document.getElementById(containerId);
         const { filters: filters, categories: categories } = formatFiltersResults(filter);
-        console.log(filters);
-        console.log(filters.sort(function(a, b) {
-            var keyA = a.filterTitle, keyB = b.filterTitle;
-            // Compare the 2 dates
-            if (keyA > keyB) return -1;
-            if (keyA < keyB) return 1;
-            return 0;
-        }));
         // const { categories } = formatFiltersResults(postFilter);
         if (!filters.length && !categories.length) container.append((0, $4034d5d0b756f7c9$export$633e2868f66ac64c)("noResults", language));
         if (categories.length > 0) {
@@ -724,6 +716,12 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
             (0, $f66fdc2e8eaf2d73$export$d8a0fc79d6aedf2e)(container, (0, $9ea3a24d21594cd9$export$3bf9b68e29fed608).getFilterSection(FILTERS_CATEGORIES_ID, titleString));
             createFilterInputs(FILTERS_CATEGORIES_ID, categories);
         }
+        filters.sort(function(a, b) {
+            var keyA = a.filterTitle, keyB = b.filterTitle;
+            if (keyA > keyB) return -1;
+            if (keyA < keyB) return 1;
+            return 0;
+        });
         filters.map((ele, i)=>{
             const id = `${containerId}-options-${i}`;
             (0, $f66fdc2e8eaf2d73$export$d8a0fc79d6aedf2e)(container, (0, $9ea3a24d21594cd9$export$3bf9b68e29fed608).getFilterSection(id, ele.filterTitle));
