@@ -221,7 +221,7 @@ const $9ea3a24d21594cd9$var$getBadge = (text)=>{
     return `<span style='position: absolute;top: 10px;inset-inline-start: 10px;z-index: 99;background: #f4f4f4;font-size: 12px;padding: 2px 8px;border-radius: 21px;'>${text}</span>`;
 };
 const $9ea3a24d21594cd9$export$490f559806196b34 = {
-    getProductsListContainer: ({ id: id })=>`<div id="${id}" class="grid py-xl"></div>`,
+    getProductsListContainer: ({ id: id })=>`<div id="${id}" class="grid g-2 py-xl"></div>`,
     getProductCard: ({ name: name, img: img, id: id, formatted_price: formatted_price, html_url: html_url, categoryName: categoryName, ratingAvg: ratingAvg, numberTotalCount: numberTotalCount, formatted_sale_price: formatted_sale_price, language: language, hasVariants: hasVariants, badge: badge })=>`
        
         <a href="${html_url}" class="col-12 col-sm-6 col-md-4 col-lg-3 fehrisVerticalCard">
