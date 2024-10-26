@@ -144,6 +144,7 @@ const $9ea3a24d21594cd9$var$filterLabelLoader = `<div class="filters-skeleton-op
         <div class="skeleton-text"></div>
       </div>`;
 const $9ea3a24d21594cd9$var$productCardLoader = `
+  <div class='col-12 col-sm-6 col-md-4 col-lg-3'>
     <div class="product-card-skeleton">
       <div class="skeleton-rect mb-xs"></div>
       <div class="skeleton-text skeleton-w-20 mb-xs"></div>
@@ -154,7 +155,8 @@ const $9ea3a24d21594cd9$var$productCardLoader = `
       </div>
 
       <div class="skeleton-text skeleton-w-70"></div>
-    </div>`;
+    </div>
+  </div>`;
 const $9ea3a24d21594cd9$export$3bf9b68e29fed608 = {
     getFilterSection: (id, text)=>`<div class="fehris-filter" id="${id}"><h3 class="fehris-text-md mb-md">${text}</h3></div>`,
     getFilterLoader: ()=>`
@@ -214,10 +216,16 @@ const $9ea3a24d21594cd9$var$priceWithSale = (formatted_price, formatted_sale_pri
       </span>
     </div>`;
 };
+const $9ea3a24d21594cd9$var$getBadge = (text)=>{
+    if (!text) return "";
+    return `<span style='position: absolute;top: 10px;inset-inline-start: 10px;z-index: 99;background: #f4f4f4;font-size: 12px;padding: 2px 8px;border-radius: 21px;'>${text}</span>`;
+};
 const $9ea3a24d21594cd9$export$490f559806196b34 = {
-    getProductsListContainer: ({ id: id })=>`<div id="${id}" class="cardsContainer py-xl"></div>`,
-    getProductCard: ({ name: name, img: img, id: id, formatted_price: formatted_price, html_url: html_url, categoryName: categoryName, ratingAvg: ratingAvg, numberTotalCount: numberTotalCount, formatted_sale_price: formatted_sale_price, language: language, hasVariants: hasVariants })=>`
-        <a href="${html_url}" class="fehrisVerticalCard">
+    getProductsListContainer: ({ id: id })=>`<div id="${id}" class="grid py-xl"></div>`,
+    getProductCard: ({ name: name, img: img, id: id, formatted_price: formatted_price, html_url: html_url, categoryName: categoryName, ratingAvg: ratingAvg, numberTotalCount: numberTotalCount, formatted_sale_price: formatted_sale_price, language: language, hasVariants: hasVariants, badge: badge })=>`
+       
+        <a href="${html_url}" class="col-12 col-sm-6 col-md-4 col-lg-3 fehrisVerticalCard">
+          ${$9ea3a24d21594cd9$var$getBadge(badge)}
           <div class="fehrisVerticalCard__image">
             <img id="${id}" src="${img}" alt="${name}">
           </div>
@@ -245,7 +253,7 @@ const $9ea3a24d21594cd9$export$490f559806196b34 = {
     getProductLoader: ()=>{
         let skeletons = "";
         for(let i = 0; i < 12; i++)skeletons += $9ea3a24d21594cd9$var$productCardLoader;
-        return `<div style='flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px'>${skeletons}</div>`;
+        return `<div class='grid'>${skeletons}</div>`;
     },
     getTopBarContainer: ({ id: id, productsCount: productsCount, language: language })=>`
         <div class="fehris-plpTopBar" id="${id}">
@@ -419,9 +427,6 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
     const initialQueryParams = (0, $f66fdc2e8eaf2d73$export$a1c95a8abb4ece3a)();
     const createFilterInputs = (element, inputs, handleChange)=>{
         const targetElement = document.getElementById(element);
-        console.log({
-            inputs: inputs
-        });
         inputs.forEach((inputInfo)=>{
             const { type: type, name: name, id: id, value: value, inputLabel: inputLabel, checked: checked, count: count, onChange: onChange } = inputInfo;
             const changeFn = handleChange || onChange;
@@ -813,7 +818,7 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
         }));
         const plContainer = document.getElementById(PRODUCTS_LIST_ID);
         products.forEach((p)=>{
-            const { name: name, id: id, html_url: html_url, formatted_price: formatted_price, images: images, categories: categories, rating: rating, formatted_sale_price: formatted_sale_price, variants: variants } = p ?? {};
+            const { name: name, id: id, html_url: html_url, formatted_price: formatted_price, images: images, categories: categories, rating: rating, formatted_sale_price: formatted_sale_price, variants: variants, badge: badge } = p ?? {};
             const productHtml = (0, $9ea3a24d21594cd9$export$490f559806196b34).getProductCard({
                 name: name[language],
                 id: id,
@@ -825,7 +830,8 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
                 numberTotalCount: rating.total_count,
                 formatted_sale_price: formatted_sale_price[language],
                 language: language,
-                hasVariants: variants?.length >= 1
+                hasVariants: variants?.length >= 1,
+                badge: badge?.body?.[language]
             });
             (0, $f66fdc2e8eaf2d73$export$d8a0fc79d6aedf2e)(plContainer, productHtml);
         });
