@@ -4,6 +4,9 @@ function $f66fdc2e8eaf2d73$export$f654b28f82155665() {
 function $f66fdc2e8eaf2d73$export$e2de15bbd9edf9c6() {
     return new URL(document.location).searchParams;
 }
+function $f66fdc2e8eaf2d73$export$ba1b94ff70383687() {
+    return new URL(document.location).pathname;
+}
 const $f66fdc2e8eaf2d73$export$88f1fdfae738af54 = ({ deleteParams: deleteParams, addParams: addParams, updateParams: updateParams })=>{
     const url = new URL(document.location);
     const params = new URLSearchParams(url.search);
@@ -458,7 +461,13 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
     }
     const getFiltersParams = ()=>{
         const queryParams = (0, $f66fdc2e8eaf2d73$export$e2de15bbd9edf9c6)();
-        const obj = {};
+        const pathName = (0, $f66fdc2e8eaf2d73$export$ba1b94ff70383687)();
+        const hasSalePriceProp = pathName === "/products/sales" ? {
+            has_sale_price: true
+        } : {};
+        const obj = {
+            ...hasSalePriceProp
+        };
         (0, $8c7805431dea922a$export$9ff7e571356ed022).forEach((key)=>{
             const value = queryParams.get(key);
             if (value) obj[key] = value;
@@ -640,7 +649,7 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
             body: body
         });
     };
-    const filtersApi = async ({ search: search, language: language, category: category, sorting_field: sorting_field, sorting_order: sorting_order, from_price: from_price, to_price: to_price, options: options })=>{
+    const filtersApi = async ({ search: search, language: language, category: category, sorting_field: sorting_field, sorting_order: sorting_order, from_price: from_price, to_price: to_price, has_sale_price: has_sale_price, options: options })=>{
         const sharedParams = {
             language: language,
             query: search,
@@ -649,6 +658,7 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
             price_lte: to_price,
             sorting_field: sorting_field,
             sorting_order: sorting_order,
+            has_sale_price: has_sale_price,
             options: options
         };
         const filtersParams = JSON.stringify({
@@ -685,7 +695,7 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
             keywords: results?.[2]?.records || []
         };
     };
-    const productsApi = async ({ search: search, language: language, category: category, sorting_field: sorting_field, sorting_order: sorting_order, from_price: from_price, to_price: to_price, options: options, size: size = (0, $8c7805431dea922a$export$8ec3d08588d2eeda), from: from = 0 })=>{
+    const productsApi = async ({ search: search, language: language, category: category, sorting_field: sorting_field, sorting_order: sorting_order, from_price: from_price, to_price: to_price, options: options, has_sale_price: has_sale_price, size: size = (0, $8c7805431dea922a$export$8ec3d08588d2eeda), from: from = 0 })=>{
         const params = JSON.stringify({
             language: language,
             query: search,
@@ -696,6 +706,7 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
             sorting_order: sorting_order,
             options: options,
             size: size,
+            has_sale_price: has_sale_price,
             from: from
         });
         const res = await callApi(params, "listing");
@@ -1091,7 +1102,6 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
  //     return "diagnosis";
  //   };
  // }).apply(fehrisNameSpace);
- // console.log(fehrisNameSpace.diagnose());
 
 
 //# sourceMappingURL=main.js.map
