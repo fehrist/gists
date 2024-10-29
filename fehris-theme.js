@@ -392,7 +392,7 @@ const $8c7805431dea922a$export$75081ca35b4dae45 = {
         DESC: "desc"
     }
 };
-const $8c7805431dea922a$export$8ec3d08588d2eeda = 18;
+const $8c7805431dea922a$export$8ec3d08588d2eeda = 24;
 
 
 
@@ -450,7 +450,10 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
             targetElement.appendChild(label);
             label.appendChild(input);
             (0, $f66fdc2e8eaf2d73$export$d8a0fc79d6aedf2e)(label, '<span class="check"></span>');
-            (0, $f66fdc2e8eaf2d73$export$d8a0fc79d6aedf2e)(label, `<div><span>${inputLabel} </span> <span> (${count})</span></div>`);
+            (0, $f66fdc2e8eaf2d73$export$d8a0fc79d6aedf2e)(label, `<div class="fehris-filter__info">
+          <span>${inputLabel}</span>
+          <span class="fehris-filter__count">${count}</span>
+        </div>`);
         });
     };
     function extractOptionNameIfValid(str) {
@@ -909,14 +912,15 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
         const keywordsNode = container.querySelector(`#${KEYWORDS_ID}`);
         const categoriesNode = container.querySelector(`#${CATEGORIES_ID}`);
         const productsNode = container.querySelector(`#${PRODUCTS_ID}`);
-        keywords.forEach((k)=>{
+        if (keywords.length) keywords.forEach((k)=>{
             const keyword = k.keyword;
             (0, $f66fdc2e8eaf2d73$export$d8a0fc79d6aedf2e)(keywordsNode, (0, $9ea3a24d21594cd9$export$4ecf3d552dae87fb).getKeywordItem({
                 keyword: keyword,
                 href: getSearchPageHref(encodeURI(keyword))
             }));
         });
-        categories.forEach((category, i)=>{
+        else keywordsNode.remove();
+        if (categories.length) categories.forEach((category, i)=>{
             const { flat_name: flat_name, url: url } = category || {};
             if (!flat_name || !url) return;
             if (i === 0) (0, $f66fdc2e8eaf2d73$export$d8a0fc79d6aedf2e)(categoriesNode, (0, $9ea3a24d21594cd9$export$4ecf3d552dae87fb).getCategoriesHead({
@@ -927,6 +931,7 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
                 href: url
             }));
         });
+        else categoriesNode.remove();
         products.forEach((product)=>{
             const name = product?.name?.[language];
             const url = product?.html_url;
