@@ -280,14 +280,15 @@ const $9ea3a24d21594cd9$export$8222c5965ba78e3b = {
 const $9ea3a24d21594cd9$export$4ecf3d552dae87fb = {
     getSearch: ({ searchContainerId: searchContainerId, searchId: searchId, autocompleteId: autocompleteId, language: language })=>`
       <div class='fehris-search' id="${searchContainerId}">
-        <input 
-          type="text"
-          id="${searchId}"
-          class='search-input'
-          placeholder="${(0, $4034d5d0b756f7c9$export$633e2868f66ac64c)("search", language)}"
-        />
-
-        <img src='https://i.gifer.com/ZKZg.gif' class='loader'/>
+        <div class="search-input">
+          <input type="text" id="${searchId}" placeholder="${(0, $4034d5d0b756f7c9$export$633e2868f66ac64c)("search", language)}" />
+              <button class="fehris-btn--yellow fehris-btn--lg" aria-label="Search">
+                <i class="icon-search"></i>
+                <div class="fehris-searchLoader">
+                  <div class="loader"></div>
+                </div>
+              </button>
+        </div>
 
         <div id="${autocompleteId}" class='fehris-autocomplete'></div>
       </div>`,
