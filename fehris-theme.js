@@ -288,7 +288,9 @@ const $9ea3a24d21594cd9$export$4ecf3d552dae87fb = {
                   <div class="loader"></div>
                 </div>
               </button>
+
         </div>
+        
 
         <div id="${autocompleteId}" class='fehris-autocomplete'></div>
       </div>`,
@@ -428,6 +430,7 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
 
 (function(fehrisNameSpace, undefined) {
     const getLang = ()=>window.appDirection === "ltr" ? "en" : "ar";
+    const checkIsCategoryPage = ()=>(0, $f66fdc2e8eaf2d73$export$ba1b94ff70383687)().startsWith("/categories/");
     const initialQueryParams = (0, $f66fdc2e8eaf2d73$export$a1c95a8abb4ece3a)();
     const createFilterInputs = (element, inputs, handleChange)=>{
         const targetElement = document.getElementById(element);
@@ -477,6 +480,7 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
             if (value) obj[key] = value;
             queryParams.delete(key);
         });
+        if (checkIsCategoryPage()) obj[(0, $8c7805431dea922a$export$e0ccd3062f6ffe3d).CATEGORY] = pathName.split("/")[2];
         const options = [];
         for (const [key, value] of queryParams){
             const validOptionName = extractOptionNameIfValid(key);
@@ -730,7 +734,7 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
         const { filters: filters, categories: categories } = formatFiltersResults(filter);
         // const { categories } = formatFiltersResults(postFilter);
         if (!filters.length && !categories.length) container.append((0, $4034d5d0b756f7c9$export$633e2868f66ac64c)("noResults", language));
-        if (categories.length > 0) {
+        if (categories.length > 0 && !checkIsCategoryPage()) {
             const titleString = (0, $4034d5d0b756f7c9$export$633e2868f66ac64c)("categories", language);
             const FILTERS_CATEGORIES_ID = `${containerId}-filtersCategories`;
             (0, $f66fdc2e8eaf2d73$export$d8a0fc79d6aedf2e)(container, (0, $9ea3a24d21594cd9$export$3bf9b68e29fed608).getFilterSection(FILTERS_CATEGORIES_ID, titleString));
@@ -988,15 +992,18 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
    ************************************
    ******** EXPOSED FUNCTIONS *********
    ************************************
-   */ const appendFilters = async function({ containerId: containerId, language: language = getLang() }) {
+   */ const appendFilters = async function({ containerId: containerId, mobileContainerId: mobileContainerId, language: language = getLang() }) {
         const container = document.getElementById(containerId);
+        const mobileContainer = document.getElementById(mobileContainerId);
         const qParams = getFiltersParams();
         container.innerHTML = (0, $9ea3a24d21594cd9$export$3bf9b68e29fed608).getFilterLoader();
+        if (mobileContainer) mobileContainer.innerHTML = (0, $9ea3a24d21594cd9$export$3bf9b68e29fed608).getFilterLoader();
         const { filter: filter, postFilter: postFilter } = await filtersApi({
             ...qParams,
             language: language
         });
         container.innerHTML = "";
+        if (mobileContainer) mobileContainer.innerHTML = "";
         const results = (0, $c33c35699540777b$export$79d5f2e8761c14d9)({
             filters: filter,
             postFilters: postFilter,
@@ -1011,6 +1018,17 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
             containerId: containerId,
             language: language
         });
+        if (mobileContainer) {
+            appendFilterToElement({
+                language: language,
+                containerId: mobileContainerId,
+                filter: results
+            });
+            appendPricesToElement({
+                containerId: mobileContainerId,
+                language: language
+            });
+        }
     };
     const appendProducts = async function({ containerId: containerId, language: language = getLang() }) {
         const TOP_BAR_ID = "fehrisProductsTopBar";
@@ -1102,12 +1120,7 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
     fehrisNameSpace.appendProducts = appendProducts;
     fehrisNameSpace.appendSearch = appendSearch;
 // fehrisNameSpace.appendSorting = appendSorting;
-})(window.fehrisNameSpace = window.fehrisNameSpace || {}); // ///////////////////////////////////////////////////////////////////
- // (function () {
- //   this.diagnose = function () {
- //     return "diagnosis";
- //   };
- // }).apply(fehrisNameSpace);
+})(window.fehrisNameSpace = window.fehrisNameSpace || {});
 
 
 //# sourceMappingURL=main.js.map
