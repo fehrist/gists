@@ -414,7 +414,7 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
     };
     if (!filteredParams?.length) results.categories = postFilters.categories;
     let newRes = [];
-    if (filteredParams?.length === 1) {
+    if (filteredParams?.length === 1 && !params.category) {
         const facet = filteredParams[0];
         const facetName = facet.name;
         const optionsFromPostFilters = postFilters?.options?.find((ele)=>ele.key === facetName);
