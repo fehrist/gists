@@ -102,7 +102,7 @@ const $4034d5d0b756f7c9$var$fehris_trans = Object.freeze({
         ar: "\u0627\u0644\u0641\u0626\u0627\u062A \u0627\u0644\u0645\u0637\u0627\u0628\u0642\u0629"
     },
     sortBy: {
-        en: "Sort by",
+        en: "Sort By",
         ar: "\u062A\u0631\u062A\u064A\u0628 \u062D\u0633\u0628  "
     },
     default: {
@@ -129,9 +129,17 @@ const $4034d5d0b756f7c9$var$fehris_trans = Object.freeze({
         en: "{{num}} products found",
         ar: "\u062A\u0645 \u0627\u064A\u062C\u0627\u062F {{num}} \u0645\u0646\u062A\u062C"
     },
-    availableInSeveralOptions: {
-        en: "Available in several options",
-        ar: "\u0645\u062A\u0648\u0641\u0631 \u0628\u0639\u062F\u0629 \u062E\u064A\u0627\u0631\u0627\u062A"
+    price_alt: {
+        en: "Price Based on Selection",
+        ar: "\u0627\u0644\u0633\u0639\u0631 \u062D\u0633\u0628 \u0627\u0644\u0627\u062E\u062A\u064A\u0627\u0631"
+    },
+    out_of_stock: {
+        en: "out of stock",
+        ar: "\u0646\u0641\u062F\u062A \u0627\u0644\u0643\u0645\u064A\u0629"
+    },
+    product_is_not_taxable: {
+        en: "Tax free",
+        ar: "\u0645\u0639\u0641\u064A \u0645\u0646 \u0627\u0644\u0636\u0631\u0627\u0626\u0628"
     }
 });
 const $4034d5d0b756f7c9$export$633e2868f66ac64c = (key, lang, options)=>{
@@ -208,7 +216,7 @@ const $9ea3a24d21594cd9$var$priceWithSale = (formatted_price, formatted_sale_pri
     if (formatted_sale_price) return `
     <div class="fehrisVerticalCard__prices">
       <span class="fehrisVerticalCard__price">
-        ${formatted_sale_price ? formatted_sale_price : formatted_price}
+        ${formatted_sale_price}
       </span>
       <span class="fehrisVerticalCard__oldPrice">${formatted_price}</span>
     </div>
@@ -223,35 +231,64 @@ const $9ea3a24d21594cd9$var$getBadge = (text)=>{
     if (!text) return "";
     return `<span style='position: absolute;top: 10px;inset-inline-start: 10px;z-index: 99;background: #f4f4f4;font-size: 12px;padding: 2px 8px;border-radius: 21px;'>${text}</span>`;
 };
+const $9ea3a24d21594cd9$var$getProductAlert = ({ hasVariants: hasVariants, is_infinite: is_infinite, quantity: quantity, language: language })=>{
+    if ((is_infinite || quantity > 0) && hasVariants) return `<div class="fehrisVerticalCard__alert fehrisVerticalCard__alert__info">
+				<span>
+          ${(0, $4034d5d0b756f7c9$export$633e2868f66ac64c)("price_alt", language)}
+				</span>
+			</div>`;
+    if (is_infinite === false && quantity <= 0) return `<div class="fehrisVerticalCard__alert">
+              ${(0, $4034d5d0b756f7c9$export$633e2868f66ac64c)("out_of_stock", language)}
+            </div>`;
+    return "";
+};
 const $9ea3a24d21594cd9$export$490f559806196b34 = {
-    getProductsListContainer: ({ id: id })=>`<div id="${id}" class="grid g-2 py-xl"></div>`,
-    getProductCard: ({ name: name, img: img, id: id, formatted_price: formatted_price, html_url: html_url, categoryName: categoryName, ratingAvg: ratingAvg, numberTotalCount: numberTotalCount, formatted_sale_price: formatted_sale_price, language: language, hasVariants: hasVariants, badge: badge })=>`
-       
-        <a href="${html_url}" class="col-12 col-sm-6 col-md-4 col-lg-3 fehrisVerticalCard">
-          ${$9ea3a24d21594cd9$var$getBadge(badge)}
-          <div class="fehrisVerticalCard__image">
-            <img id="${id}" src="${img}" alt="${name}">
-          </div>
+    getProductsListContainer: ({ id: id })=>`<div id="${id}" class="grid g-2 pb-md"></div>`,
+    getProductCard: ({ name: name, img: img, id: id, formatted_price: formatted_price, html_url: html_url, categoryName: categoryName, ratingAvg: ratingAvg, numberTotalCount: numberTotalCount, formatted_sale_price: formatted_sale_price, language: language, hasVariants: hasVariants, badge: badge, is_infinite: is_infinite, quantity: quantity, is_taxable: is_taxable })=>`
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+        <a href="${html_url}" class="fehrisVerticalCard" style="min-height: 100%">
+          <div>
+            ${$9ea3a24d21594cd9$var$getBadge(badge)}
+            <div class="fehrisVerticalCard__imageContainer">
+              <div class="fehrisVerticalCard__image">
+                <img id="${id}" src="${img}" alt="${name}">
+              </div>
 
-          <div class="fehrisVerticalCard__content">
-            <span class="fehrisVerticalCard__category"> ${categoryName} </span>
-            
-            <h3 class="fehrisVerticalCard__title"> ${name} </h3>
-
-            <div class="fehrisVerticalCard__reviews">
-              <div class="fehrisVerticalCard__stars__singlestar ${ratingAvg > 0 && "checked"}"></div>
-              <div class="fehrisVerticalCard__stars__singlestar ${ratingAvg > 1 && "checked"}"></div>
-              <div class="fehrisVerticalCard__stars__singlestar ${ratingAvg > 2 && "checked"}"></div>
-              <div class="fehrisVerticalCard__stars__singlestar ${ratingAvg > 3 && "checked"}"></div>
-              <div class="fehrisVerticalCard__stars__singlestar ${ratingAvg > 4 && "checked"}"></div>
-              ${numberTotalCount ? "(" + numberTotalCount + ")" : ""}
+              ${(is_infinite || quantity > 0) && !is_taxable ? `<div class="productTags">
+                      <span class="productTags__tag">
+                        ${(0, $4034d5d0b756f7c9$export$633e2868f66ac64c)("product_is_not_taxable", language)}
+                      </span>
+                    </div>` : ""}
             </div>
 
-            ${$9ea3a24d21594cd9$var$priceWithSale(formatted_price, formatted_sale_price)}
+            <div class="fehrisVerticalCard__content">
+              <span class="fehrisVerticalCard__category"> ${categoryName} </span>
+              
+              <h3 class="fehrisVerticalCard__title"> ${name} </h3>
+
+              <div class="fehrisVerticalCard__reviews">
+                <div class="fehrisVerticalCard__stars">
+                  <div class="fehrisVerticalCard__stars__singlestar ${ratingAvg > 0 ? ratingAvg === 0.5 ? "halfChecked" : "checked" : ""}"></div>
+                  <div class="fehrisVerticalCard__stars__singlestar ${ratingAvg > 1 ? ratingAvg === 1.5 ? "halfChecked" : "checked" : ""}"></div>
+                  <div class="fehrisVerticalCard__stars__singlestar ${ratingAvg > 2 ? ratingAvg === 2.5 ? "halfChecked" : "checked" : ""}"></div>
+                  <div class="fehrisVerticalCard__stars__singlestar ${ratingAvg > 3 ? ratingAvg === 3.5 ? "halfChecked" : "checked" : ""}"></div>
+                  <div class="fehrisVerticalCard__stars__singlestar ${ratingAvg > 4 ? ratingAvg === 4.5 ? "halfChecked" : "checked" : ""}"></div>
+                </div>
+                ${numberTotalCount ? `<span class="fehrisVerticalCard__reviewCount">(${numberTotalCount})</span>` : ""}
+              </div>
+
+              ${$9ea3a24d21594cd9$var$priceWithSale(formatted_price, formatted_sale_price)}
+            </div>
           </div>
-          
-          <span>${hasVariants ? (0, $4034d5d0b756f7c9$export$633e2868f66ac64c)("availableInSeveralOptions", language) : ""}</span>
+
+          ${$9ea3a24d21594cd9$var$getProductAlert({
+            hasVariants: hasVariants,
+            is_infinite: is_infinite,
+            quantity: quantity,
+            language: language
+        })}
         </a>
+      </div>
     `,
     getProductLoader: ()=>{
         let skeletons = "";
@@ -259,14 +296,16 @@ const $9ea3a24d21594cd9$export$490f559806196b34 = {
         return `<div class='grid'>${skeletons}</div>`;
     },
     getTopBarContainer: ({ id: id, productsCount: productsCount, language: language })=>`
-        <div class="fehris-plpTopBar" id="${id}">
+        <div class="fehris-plpTopBar mb-md" id="${id}">
           <p class="fehris-text-md"> ${(0, $4034d5d0b756f7c9$export$633e2868f66ac64c)("productsFound", language, {
             num: productsCount
         })}</p>
         </div>`,
     getSortingContainer: ({ id: id, language: language })=>`
-        <div class='fehris-plpTopBar__sort' id='${id}'>
-          <span>${(0, $4034d5d0b756f7c9$export$633e2868f66ac64c)("sortBy", language)}</span>
+        <div class='form-group' style='margin: 0'>
+          <div id='${id}'>
+            <span>${(0, $4034d5d0b756f7c9$export$633e2868f66ac64c)("sortBy", language)}</span>
+          </div>
         </div>`
 };
 const $9ea3a24d21594cd9$export$8222c5965ba78e3b = {
@@ -837,7 +876,7 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
         }));
         const plContainer = document.getElementById(PRODUCTS_LIST_ID);
         products.forEach((p)=>{
-            const { name: name, id: id, html_url: html_url, formatted_price: formatted_price, images: images, categories: categories, rating: rating, formatted_sale_price: formatted_sale_price, variants: variants, badge: badge } = p ?? {};
+            const { name: name, id: id, html_url: html_url, formatted_price: formatted_price, images: images, categories: categories, rating: rating, formatted_sale_price: formatted_sale_price, variants: variants, badge: badge, is_infinite: is_infinite, quantity: quantity, is_taxable: is_taxable } = p ?? {};
             const productHtml = (0, $9ea3a24d21594cd9$export$490f559806196b34).getProductCard({
                 name: name[language],
                 id: id,
@@ -850,7 +889,10 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
                 formatted_sale_price: formatted_sale_price[language],
                 language: language,
                 hasVariants: variants?.length >= 1,
-                badge: badge?.body?.[language]
+                badge: badge?.body?.[language],
+                is_infinite: is_infinite,
+                quantity: quantity,
+                is_taxable: is_taxable
             });
             (0, $f66fdc2e8eaf2d73$export$d8a0fc79d6aedf2e)(plContainer, productHtml);
         });
