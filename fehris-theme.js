@@ -467,6 +467,541 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
 }
 
 
+function $08c8c30dbc5ff91e$var$$0102d920810385a3$export$5649e0907eccaff6() {
+    const SESSION_ID = "chatSessionId";
+    // Configuration
+    const storeId = 1;
+    const baseUrl = "https://proxy-zid.api.fehris.io";
+    // Get sessionId from localStorage if it exists
+    let sessionId = localStorage.getItem(SESSION_ID) || null;
+    // Chat DOM Elements
+    const chatContainer = document.getElementById("fehris-chat-container");
+    const chatMessages = document.getElementById("fehris-chat-messages");
+    const userInput = document.getElementById("fehris-chat-user-input");
+    const sendButton = document.getElementById("fehris-chat-send-button");
+    const chatToggle = document.getElementById("fehris-chat-toggle");
+    const closeChat = document.getElementById("fehris-chat-close-chat");
+    // Chat history
+    let conversationHistory = [];
+    // Initialize the button as disabled
+    sendButton.disabled = true;
+    // Toggle chat visibility
+    chatToggle.addEventListener("click", function() {
+        chatContainer.style.display = chatContainer.style.display === "none" ? "flex" : "none";
+        userInput.focus();
+    });
+    // Close chat button
+    closeChat.addEventListener("click", function() {
+        chatContainer.style.display = "none";
+    });
+    // Add event listeners
+    sendButton.addEventListener("click", sendMessage);
+    userInput.addEventListener("keypress", function(e) {
+        if (e.key === "Enter" && !sendButton.disabled) sendMessage();
+    });
+    // Enable/disable send button based on input
+    userInput.addEventListener("input", function() {
+        sendButton.disabled = userInput.value.trim() === "";
+    });
+    // Initialize chat session
+    initializeChat();
+    async function initializeChat() {
+        if (sessionId) return;
+        try {
+            await getSession();
+        } catch (error) {
+            // Show error message
+            const botErrorResponse = "Sorry, I'm having trouble connecting to the service.";
+            // Reset conversation history with the new session
+            conversationHistory = [
+                {
+                    role: "user",
+                    parts: [
+                        {
+                            text: "You are a helpful assistant."
+                        }
+                    ]
+                },
+                {
+                    role: "model",
+                    parts: [
+                        {
+                            text: botErrorResponse
+                        }
+                    ]
+                }
+            ];
+            // Clear chat messages
+            chatMessages.innerHTML = "";
+            // Add the welcome message from the API
+            addMessage(botErrorResponse, "bot");
+        }
+    }
+    async function getSession() {
+        try {
+            const response = await fetch(`${baseUrl}/session`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+            const data = await response.json();
+            if (data.sessionId && data.message) {
+                sessionId = data.sessionId;
+                localStorage.setItem(SESSION_ID, sessionId);
+                // Reset conversation history with the new session
+                conversationHistory = [
+                    {
+                        role: "user",
+                        parts: [
+                            {
+                                text: "You are a helpful assistant."
+                            }
+                        ]
+                    },
+                    {
+                        role: "model",
+                        parts: [
+                            {
+                                text: data.message
+                            }
+                        ]
+                    }
+                ];
+                // Clear chat messages
+                chatMessages.innerHTML = "";
+                // Add the welcome message from the API
+                addMessage(data.message, "bot");
+                return sessionId;
+            } else throw new Error("Invalid session response format");
+        } catch (error) {
+            throw new Error("Unexpected response format from API");
+        }
+    }
+    // Main function to send message
+    async function sendMessage() {
+        const message = userInput.value.trim();
+        if (message) {
+            // Disable button input while processing
+            sendButton.disabled = true;
+            userInput.disabled = true;
+            // Add user message to chat
+            addMessage(message, "user");
+            conversationHistory.push({
+                role: "user",
+                parts: [
+                    {
+                        text: message
+                    }
+                ]
+            });
+            // Clear input
+            userInput.value = "";
+            // Show skeleton loading
+            showSkeletonLoader();
+            try {
+                // Ensure we have a session ID before sending
+                if (!sessionId) {
+                    await getSession();
+                    // After getting session, we need to re-add the user message
+                    conversationHistory.push({
+                        role: "user",
+                        parts: [
+                            {
+                                text: message
+                            }
+                        ]
+                    });
+                    addMessage(message, "user");
+                }
+                const botResponse = await getChatResponse();
+                // Remove skeleton
+                removeSkeletonLoader();
+                // Add bot response
+                addMessage(botResponse, "bot");
+                conversationHistory.push({
+                    role: "model",
+                    parts: [
+                        {
+                            text: botResponse
+                        }
+                    ]
+                });
+            } catch (error) {
+                // Remove skeleton
+                removeSkeletonLoader();
+                // Show error message
+                addMessage("Sorry, I'm having trouble connecting to the service.", "bot");
+            }
+            // Re-enable input and button after processing
+            userInput.disabled = false;
+            sendButton.disabled = userInput.value.trim() === "";
+        }
+    }
+    async function getChatResponse() {
+        const response = await fetch(`${baseUrl}/chat?store_id=${storeId}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                question: conversationHistory[conversationHistory.length - 1].parts[0].text,
+                sessionId: sessionId
+            })
+        });
+        const data = await response.json();
+        // Handle the response format
+        if (data && data.answer) return data.answer;
+        else throw new Error("Unexpected response format from API");
+    }
+    // Skeleton loader functions
+    function showSkeletonLoader() {
+        const skeletonDiv = document.createElement("div");
+        skeletonDiv.className = "fehris-chat-skeleton-message";
+        const contentDiv = document.createElement("div");
+        contentDiv.className = "fehris-chat-skeleton-content";
+        const line1 = document.createElement("div");
+        line1.className = "fehris-chat-skeleton-line short";
+        const line2 = document.createElement("div");
+        line2.className = "fehris-chat-skeleton-line medium";
+        const line3 = document.createElement("div");
+        line3.className = "fehris-chat-skeleton-line long";
+        contentDiv.appendChild(line1);
+        contentDiv.appendChild(line2);
+        contentDiv.appendChild(line3);
+        skeletonDiv.appendChild(contentDiv);
+        skeletonDiv.id = "fehris-chat-current-skeleton";
+        chatMessages.appendChild(skeletonDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    function removeSkeletonLoader() {
+        const skeleton = document.getElementById("fehris-chat-current-skeleton");
+        if (skeleton) skeleton.remove();
+    }
+    function addMessage(text, sender) {
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `fehris-chat-message fehris-chat-${sender}-message`;
+        const contentDiv = document.createElement("div");
+        contentDiv.className = "fehris-chat-message-content";
+        contentDiv.textContent = text;
+        const timeDiv = document.createElement("div");
+        timeDiv.className = "fehris-chat-message-time";
+        timeDiv.textContent = getCurrentTime();
+        messageDiv.appendChild(contentDiv);
+        messageDiv.appendChild(timeDiv);
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    function getCurrentTime() {
+        const now = new Date();
+        return now.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+    }
+}
+const $08c8c30dbc5ff91e$var$$a3c3d38faa6c4170$var$chatbotStyles = `
+:root {
+--fehris-chat-primary-main: #4caf50;
+--fehris-chat-primary-dark: #2e9132;
+--fehris-chat-primary-light: #6acd6e;
+--fehris-chat-background-main: #f5f5f5;
+--fehris-chat-background-dark: #e6e6e6;
+--fehris-chat-background-light: #ffffff;
+--fehris-chat-text-main: #333333;
+--fehris-chat-text-dark: #0b0b0b;
+--fehris-chat-text-light: #5b5b5b;
+--fehris-chat-white: #ffffff;
+--fehris-chat-gray-light: #e5e5ea;
+--fehris-chat-gray-medium: #e0e0e0;
+--fehris-chat-shadow-color: rgba(0, 0, 0, 0.1);
+--fehris-chat-spacing-xs: 3px;
+--fehris-chat-spacing-sm: 5px;
+--fehris-chat-spacing-md: 10px;
+--fehris-chat-spacing-lg: 15px;
+--fehris-chat-spacing-xl: 20px;
+--fehris-chat-chat-width: 400px;
+--fehris-chat-chat-height: 600px;
+--fehris-chat-mobile-chat-width: 350px;
+--fehris-chat-mobile-chat-height: 500px;
+--fehris-chat-toggle-button-size: 60px;
+--fehris-chat-font-family: "Arial", sans-serif;
+--fehris-chat-font-size-sm: 11px;
+--fehris-chat-font-size-md: 12px;
+--fehris-chat-font-size-lg: 14px;
+--fehris-chat-font-size-xl: 20px;
+--fehris-chat-font-size-2xl: 25px;
+--fehris-chat-border-radius-sm: 5px;
+--fehris-chat-border-radius-md: 10px;
+--fehris-chat-border-radius-lg: 18px;
+--fehris-chat-border-radius-circle: 50%;
+--fehris-chat-border-width: 1px;
+--fehris-chat-transition-fast: 0.2s;
+--fehris-chat-transition-medium: 0.3s;
+--fehris-chat-shadow-sm: 0 0 20px var(--fehris-chat-shadow-color);
+--fehris-chat-shadow-md: 0 4px 8px var(--fehris-chat-shadow-color);
+}
+.fehris-chat-container {
+width: var(--fehris-chat-chat-width);
+height: var(--fehris-chat-chat-height);
+background-color: var(--fehris-chat-white);
+border-radius: var(--fehris-chat-border-radius-md);
+box-shadow: var(--fehris-chat-shadow-sm);
+display: flex;
+flex-direction: column;
+}
+.fehris-chat-header {
+background-color: var(--fehris-chat-primary-main);
+color: var(--fehris-chat-white);
+padding: var(--fehris-chat-spacing-lg);
+border-top-left-radius: var(--fehris-chat-border-radius-md);
+border-top-right-radius: var(--fehris-chat-border-radius-md);
+text-align: center;
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+.fehris-chat-header h2 {
+margin: 0;
+}
+.fehris-chat-bot-status {
+width: 25px;
+height: 25px;
+background-color: rgba(255, 255, 255, 0.2);
+padding: var(--fehris-chat-spacing-xs);
+border-radius: var(--fehris-chat-border-radius-md);
+}
+.fehris-chat-messages {
+flex: 1;
+padding: var(--fehris-chat-spacing-lg);
+overflow-y: auto;
+background-color: var(--fehris-chat-background-light);
+}
+.fehris-chat-message {
+margin-bottom: var(--fehris-chat-spacing-lg);
+display: flex;
+flex-direction: column;
+animation: fehrisChatFadeIn var(--fehris-chat-transition-medium) ease-in-out;
+}
+.fehris-chat-message-content {
+max-width: 70%;
+padding: var(--fehris-chat-spacing-md) var(--fehris-chat-spacing-lg);
+border-radius: var(--fehris-chat-border-radius-lg);
+word-wrap: break-word;
+position: relative;
+}
+.fehris-chat-user-message {
+align-items: flex-end;
+}
+.fehris-chat-user-message .fehris-chat-message-content {
+background-color: var(--fehris-chat-primary-main);
+color: var(--fehris-chat-white);
+border-bottom-right-radius: var(--fehris-chat-border-radius-sm);
+}
+.fehris-chat-bot-message {
+align-items: flex-start;
+}
+.fehris-chat-bot-message .fehris-chat-message-content {
+background-color: var(--fehris-chat-gray-light);
+color: var(--fehris-chat-text-main);
+border-bottom-left-radius: var(--fehris-chat-border-radius-sm);
+}
+.fehris-chat-message-time {
+font-size: var(--fehris-chat-font-size-sm);
+color: var(--fehris-chat-text-light);
+margin-top: var(--fehris-chat-spacing-xs);
+}
+.fehris-chat-input {
+display: flex;
+padding: var(--fehris-chat-spacing-md);
+border-top: var(--fehris-chat-border-width) solid
+var(--fehris-chat-gray-medium);
+background-color: var(--fehris-chat-white);
+}
+.fehris-chat-input input {
+flex: 1;
+padding: var(--fehris-chat-spacing-md);
+border: var(--fehris-chat-border-width) solid var(--fehris-chat-gray-medium);
+border-radius: var(--fehris-chat-border-radius-lg);
+outline: none;
+font-size: var(--fehris-chat-font-size-lg);
+}
+.fehris-chat-input button {
+margin-left: var(--fehris-chat-spacing-md);
+padding: var(--fehris-chat-spacing-md) var(--fehris-chat-spacing-xl);
+background-color: var(--fehris-chat-primary-main);
+color: var(--fehris-chat-white);
+border: none;
+border-radius: var(--fehris-chat-border-radius-lg);
+cursor: pointer;
+transition: background-color var(--fehris-chat-transition-fast);
+}
+.fehris-chat-input button:hover {
+background-color: var(--fehris-chat-primary-light);
+}
+.fehris-chat-input button:active {
+background-color: var(--fehris-chat-primary-dark);
+}
+@keyframes fehrisChatFadeIn {
+from {
+  opacity: 0;
+  transform: translateY(var(--fehris-chat-spacing-md));
+}
+to {
+  opacity: 1;
+  transform: translateY(0);
+}
+}
+.fehris-chat-toggle-button {
+position: fixed;
+bottom: var(--fehris-chat-spacing-xl);
+right: var(--fehris-chat-spacing-xl);
+width: var(--fehris-chat-toggle-button-size);
+height: var(--fehris-chat-toggle-button-size);
+border-radius: var(--fehris-chat-border-radius-circle);
+background-color: var(--fehris-chat-primary-main);
+color: var(--fehris-chat-white);
+border: none;
+cursor: pointer;
+box-shadow: var(--fehris-chat-shadow-md);
+display: flex;
+justify-content: center;
+align-items: center;
+z-index: 1000;
+transition: all var(--fehris-chat-transition-medium) ease;
+}
+.fehris-chat-toggle-button:hover {
+background-color: var(--fehris-chat-primary-light);
+transform: scale(1.1);
+}
+.fehris-chat-toggle-button:active {
+transform: scale(0.95);
+}
+.fehris-chat-container {
+position: fixed;
+bottom: 90px;
+right: var(--fehris-chat-spacing-xl);
+width: var(--fehris-chat-mobile-chat-width);
+height: var(--fehris-chat-mobile-chat-height);
+transition: all var(--fehris-chat-transition-medium) ease;
+z-index: 1000;
+}
+.fehris-chat-close-chat {
+background: none;
+border: none;
+color: var(--fehris-chat-white);
+font-size: var(--fehris-chat-font-size-2xl);
+cursor: pointer;
+padding: 0;
+}
+.fehris-chat-close-chat:hover {
+color: var(--fehris-chat-gray-medium);
+}
+.fehris-chat-skeleton-message {
+margin-bottom: var(--fehris-chat-spacing-lg);
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+}
+.fehris-chat-skeleton-content {
+width: 70%;
+padding: var(--fehris-chat-spacing-md) var(--fehris-chat-spacing-lg);
+border-radius: var(--fehris-chat-border-radius-lg);
+background-color: var(--fehris-chat-gray-light);
+position: relative;
+overflow: hidden;
+}
+.fehris-chat-skeleton-content::before {
+content: "";
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: linear-gradient(
+  90deg,
+  rgba(255, 255, 255, 0) 0%,
+  rgba(255, 255, 255, 0.5) 50%,
+  rgba(255, 255, 255, 0) 100%
+);
+animation: fehrisChatSkeletonShimmer 1.5s infinite;
+}
+@keyframes fehrisChatSkeletonShimmer {
+0% {
+  transform: translateX(-100%);
+}
+100% {
+  transform: translateX(100%);
+}
+}
+.fehris-chat-skeleton-line {
+height: 12px;
+background-color: var(--fehris-chat-gray-light);
+border-radius: 6px;
+margin-bottom: 6px;
+position: relative;
+overflow: hidden;
+}
+.fehris-chat-skeleton-line::before {
+content: "";
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: linear-gradient(
+  90deg,
+  rgba(255, 255, 255, 0) 0%,
+  rgba(255, 255, 255, 0.5) 50%,
+  rgba(255, 255, 255, 0) 100%
+);
+animation: fehrisChatSkeletonShimmer 1.5s infinite;
+}
+.fehris-chat-skeleton-line.short {
+width: 60%;
+}
+.fehris-chat-skeleton-line.medium {
+width: 80%;
+}
+.fehris-chat-skeleton-line.long {
+width: 90%;
+}
+.fehris-chat-input button:disabled {
+background-color: var(--fehris-chat-text-dark);
+cursor: not-allowed;
+opacity: 0.7;
+}
+.fehris-chat-input button:disabled:hover {
+background-color: var(--fehris-chat-text-dark);
+transform: none;
+}
+`;
+function $08c8c30dbc5ff91e$var$$a3c3d38faa6c4170$export$3b08d3ae7d3bc49f() {
+    (function injectHTML() {
+        const html = `
+    <button id="fehris-chat-toggle" class="fehris-chat-toggle-button"><svg width="22" height="22" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M5.856 17.121a.979.979 0 0 1-.327-.06.839.839 0 0 1-.283-.177.739.739 0 0 1-.187-.255.724.724 0 0 1-.07-.303l-.02-1.609a4.663 4.663 0 0 1-1.446-.455 4.252 4.252 0 0 1-.637-.401c-.199-.146-.385-.31-.553-.492a4.442 4.442 0 0 1-.45-.577 4.303 4.303 0 0 1-.327-.637 3.823 3.823 0 0 1-.206-.686 3.729 3.729 0 0 1-.064-.704V6.478c0-.261.025-.516.077-.771a4.43 4.43 0 0 1 .244-.747 4.062 4.062 0 0 1 .932-1.28c.2-.183.418-.347.65-.493.23-.145.482-.267.739-.364a4.21 4.21 0 0 1 .81-.225c.27-.054.553-.078.835-.078H8.55c.103 0 .2.018.29.054a.7.7 0 0 1 .411.376.667.667 0 0 1-.161.766.736.736 0 0 1-.25.151.764.764 0 0 1-.29.055H5.573c-.186 0-.366.012-.54.049-.18.03-.353.079-.52.145-.167.061-.328.14-.482.237-.148.091-.29.2-.418.316a2.897 2.897 0 0 0-.347.388c-.097.14-.187.286-.257.444a2.473 2.473 0 0 0-.206.977v4.287c0 .17.013.333.051.503a2.549 2.549 0 0 0 .772 1.33 2.721 2.721 0 0 0 .913.559c.167.066.347.115.527.152.18.03.36.048.546.048a.904.904 0 0 1 .61.23.848.848 0 0 1 .194.262.84.84 0 0 1 .07.303l.007.99 1.915-1.293a2.877 2.877 0 0 1 1.64-.492h2.372c.186 0 .366-.018.54-.048.18-.03.353-.08.52-.146.168-.067.329-.146.483-.237.148-.091.29-.2.418-.316.128-.121.244-.249.347-.388a2.8 2.8 0 0 0 .257-.444 2.47 2.47 0 0 0 .206-.977V8.585a.646.646 0 0 1 .225-.492.679.679 0 0 1 .244-.152.814.814 0 0 1 .585 0c.09.03.174.085.244.152a.657.657 0 0 1 .225.492V10.8c0 .261-.032.516-.083.771a4.192 4.192 0 0 1-.245.74c-.109.244-.244.468-.398.687a3.735 3.735 0 0 1-.534.6c-.2.183-.418.347-.65.493a4.134 4.134 0 0 1-.738.364 4.7 4.7 0 0 1-.81.225c-.27.054-.553.079-.836.079h-1.877c-.604 0-1.144.164-1.633.491l-2.54 1.713a.913.913 0 0 1-.514.157z" fill="currentColor"></path> <path d="M15.866 4.125h-4.174c-.41 0-.741.313-.741.7 0 .387.332.7.741.7h4.174c.41 0 .742-.313.742-.7 0-.387-.332-.7-.742-.7z" fill="currentColor" ></path> <path d="M14.537 2.932c0-.396-.34-.717-.759-.717s-.758.32-.758.717v3.786c0 .396.34.717.758.717.42 0 .76-.321.76-.717V2.932z" fill="currentColor"></path></svg></button>
+    <div class="fehris-chat-container" id="fehris-chat-container" style="display: none"><div class="fehris-chat-header"><div class="fehris-chat-bot-status"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 0 0 2.25-2.25V6.75a2.25 2.25 0 0 0-2.25-2.25H6.75A2.25 2.25 0 0 0 4.5 6.75v10.5a2.25 2.25 0 0 0 2.25 2.25Zm.75-12h9v9h-9v-9Z"/></svg></div><h2>Chatbot Assistant</h2><button class="fehris-chat-close-chat" id="fehris-chat-close-chat">\xd7</button></div><div class="fehris-chat-messages" id="fehris-chat-messages"><div class="fehris-chat-message fehris-chat-bot-message"><div class="fehris-chat-message-content">Hi! How can I help you today?</div><div class="fehris-chat-message-time">Just now</div></div></div><div class="fehris-chat-input"> <input type="text" id="fehris-chat-user-input" placeholder="Type your message here..." autocomplete="off"/><button id="fehris-chat-send-button">Send</button></div></div>
+  `;
+        const container = document.createElement("div");
+        container.innerHTML = html;
+        document.body.appendChild(container);
+    })();
+    (function injectStyles() {
+        const style = document.createElement("style");
+        style.innerText = $08c8c30dbc5ff91e$var$$a3c3d38faa6c4170$var$chatbotStyles;
+        document.head.appendChild(style);
+    })();
+}
+(function(initFehrisChat, undefined) {
+    const init = (config)=>{
+        if (config && config.storeId) localStorage.setItem("fehrisStoreId", config.storeId);
+        $08c8c30dbc5ff91e$var$$a3c3d38faa6c4170$export$3b08d3ae7d3bc49f();
+        $08c8c30dbc5ff91e$var$$0102d920810385a3$export$5649e0907eccaff6();
+    };
+    initFehrisChat.init = init;
+})(window.initFehrisChat = window.initFehrisChat || {}); //# sourceMappingURL=main.js.map
+
+
 (function(fehrisNameSpace, undefined) {
     const getLang = ()=>window.appDirection === "ltr" ? "en" : "ar";
     const checkIsCategoryPage = ()=>(0, $f66fdc2e8eaf2d73$export$ba1b94ff70383687)().startsWith("/categories/");
