@@ -467,10 +467,11 @@ function $c33c35699540777b$export$79d5f2e8761c14d9({ filters: filters, postFilte
 }
 
 
-function $08c8c30dbc5ff91e$var$$0102d920810385a3$export$5649e0907eccaff6() {
+function $08c8c30dbc5ff91e$var$$0102d920810385a3$export$5649e0907eccaff6(storeId, languageCode) {
     const SESSION_ID = "chatSessionId";
+    const initialMessage = languageCode === "ar" ? "\u0645\u0631\u062D\u0628\u064B\u0627! \u0643\u064A\u0641 \u064A\u0645\u0643\u0646\u0646\u064A \u0645\u0633\u0627\u0639\u062F\u062A\u0643 \u0627\u0644\u064A\u0648\u0645\u061F" : "Hi! How can I help you today?";
+    const errorMessage = languageCode === "ar" ? "\u0639\u0630\u0631\u064B\u0627\u060C \u0623\u0648\u0627\u062C\u0647 \u0645\u0634\u0643\u0644\u0629 \u0641\u064A \u0627\u0644\u0627\u062A\u0635\u0627\u0644 \u0628\u0627\u0644\u062E\u062F\u0645\u0629." : "Sorry, I'm having trouble connecting to the service.";
     // Configuration
-    const storeId = 1;
     const baseUrl = "https://proxy-zid.api.fehris.io";
     // Get sessionId from localStorage if it exists
     let sessionId = localStorage.getItem(SESSION_ID) || null;
@@ -510,8 +511,6 @@ function $08c8c30dbc5ff91e$var$$0102d920810385a3$export$5649e0907eccaff6() {
         try {
             await getSession();
         } catch (error) {
-            // Show error message
-            const botErrorResponse = "Sorry, I'm having trouble connecting to the service.";
             // Reset conversation history with the new session
             conversationHistory = [
                 {
@@ -526,7 +525,7 @@ function $08c8c30dbc5ff91e$var$$0102d920810385a3$export$5649e0907eccaff6() {
                     role: "model",
                     parts: [
                         {
-                            text: botErrorResponse
+                            text: errorMessage
                         }
                     ]
                 }
@@ -534,7 +533,7 @@ function $08c8c30dbc5ff91e$var$$0102d920810385a3$export$5649e0907eccaff6() {
             // Clear chat messages
             chatMessages.innerHTML = "";
             // Add the welcome message from the API
-            addMessage(botErrorResponse, "bot");
+            addMessage(errorMessage, "bot");
         }
     }
     async function getSession() {
@@ -571,7 +570,7 @@ function $08c8c30dbc5ff91e$var$$0102d920810385a3$export$5649e0907eccaff6() {
                 // Clear chat messages
                 chatMessages.innerHTML = "";
                 // Add the welcome message from the API
-                addMessage(data.message, "bot");
+                addMessage(initialMessage, "bot");
                 return sessionId;
             } else throw new Error("Invalid session response format");
         } catch (error) {
@@ -631,7 +630,7 @@ function $08c8c30dbc5ff91e$var$$0102d920810385a3$export$5649e0907eccaff6() {
                 // Remove skeleton
                 removeSkeletonLoader();
                 // Show error message
-                addMessage("Sorry, I'm having trouble connecting to the service.", "bot");
+                addMessage(errorMessage, "bot");
             }
             // Re-enable input and button after processing
             userInput.disabled = false;
@@ -683,7 +682,12 @@ function $08c8c30dbc5ff91e$var$$0102d920810385a3$export$5649e0907eccaff6() {
         messageDiv.className = `fehris-chat-message fehris-chat-${sender}-message`;
         const contentDiv = document.createElement("div");
         contentDiv.className = "fehris-chat-message-content";
-        contentDiv.textContent = text;
+        if (sender === "user") contentDiv.textContent = text;
+        else {
+            let rawHtml = text.replace(/```html|```/g, "").trim();
+            rawHtml = rawHtml.replace(/<a href=/g, '<a target="_blank" href=');
+            contentDiv.insertAdjacentHTML("beforeend", rawHtml);
+        }
         const timeDiv = document.createElement("div");
         timeDiv.className = "fehris-chat-message-time";
         timeDiv.textContent = getCurrentTime();
@@ -694,9 +698,10 @@ function $08c8c30dbc5ff91e$var$$0102d920810385a3$export$5649e0907eccaff6() {
     }
     function getCurrentTime() {
         const now = new Date();
-        return now.toLocaleTimeString([], {
+        return now.toLocaleTimeString(languageCode, {
             hour: "2-digit",
-            minute: "2-digit"
+            minute: "2-digit",
+            hour12: true
         });
     }
 }
@@ -720,8 +725,8 @@ const $08c8c30dbc5ff91e$var$$a3c3d38faa6c4170$var$chatbotStyles = `
 --fehris-chat-spacing-md: 10px;
 --fehris-chat-spacing-lg: 15px;
 --fehris-chat-spacing-xl: 20px;
---fehris-chat-chat-width: 400px;
---fehris-chat-chat-height: 600px;
+--fehris-chat-desktop-chat-width: 400px;
+--fehris-chat-desktop-chat-height: 600px;
 --fehris-chat-mobile-chat-width: 350px;
 --fehris-chat-mobile-chat-height: 500px;
 --fehris-chat-toggle-button-size: 60px;
@@ -742,13 +747,18 @@ const $08c8c30dbc5ff91e$var$$a3c3d38faa6c4170$var$chatbotStyles = `
 --fehris-chat-shadow-md: 0 4px 8px var(--fehris-chat-shadow-color);
 }
 .fehris-chat-container {
-width: var(--fehris-chat-chat-width);
-height: var(--fehris-chat-chat-height);
 background-color: var(--fehris-chat-white);
 border-radius: var(--fehris-chat-border-radius-md);
 box-shadow: var(--fehris-chat-shadow-sm);
 display: flex;
 flex-direction: column;
+position: fixed;
+bottom: 90px;
+inset-inline-end: var(--fehris-chat-spacing-xl);
+width: var(--fehris-chat-desktop-chat-width);
+height: var(--fehris-chat-desktop-chat-height);
+transition: all var(--fehris-chat-transition-medium) ease;
+z-index: 1000;
 }
 .fehris-chat-header {
 background-color: var(--fehris-chat-primary-main);
@@ -790,6 +800,17 @@ border-radius: var(--fehris-chat-border-radius-lg);
 word-wrap: break-word;
 position: relative;
 }
+.fehris-chat-message-content p {
+margin: 0;
+}
+.fehris-chat-message-content a {
+    color: #0066cc;
+    text-decoration: none;
+    font-weight: bold;
+    &:hover {
+    text-decoration: underline;
+  }
+}
 .fehris-chat-user-message {
 align-items: flex-end;
 }
@@ -817,6 +838,7 @@ padding: var(--fehris-chat-spacing-md);
 border-top: var(--fehris-chat-border-width) solid
 var(--fehris-chat-gray-medium);
 background-color: var(--fehris-chat-white);
+gap: var(--fehris-chat-spacing-md);
 }
 .fehris-chat-input input {
 flex: 1;
@@ -826,8 +848,7 @@ border-radius: var(--fehris-chat-border-radius-lg);
 outline: none;
 font-size: var(--fehris-chat-font-size-lg);
 }
-.fehris-chat-input button {
-margin-left: var(--fehris-chat-spacing-md);
+.fehris-chat-input button { 
 padding: var(--fehris-chat-spacing-md) var(--fehris-chat-spacing-xl);
 background-color: var(--fehris-chat-primary-main);
 color: var(--fehris-chat-white);
@@ -855,7 +876,7 @@ to {
 .fehris-chat-toggle-button {
 position: fixed;
 bottom: var(--fehris-chat-spacing-xl);
-right: var(--fehris-chat-spacing-xl);
+inset-inline-end: var(--fehris-chat-spacing-xl);
 width: var(--fehris-chat-toggle-button-size);
 height: var(--fehris-chat-toggle-button-size);
 border-radius: var(--fehris-chat-border-radius-circle);
@@ -877,15 +898,7 @@ transform: scale(1.1);
 .fehris-chat-toggle-button:active {
 transform: scale(0.95);
 }
-.fehris-chat-container {
-position: fixed;
-bottom: 90px;
-right: var(--fehris-chat-spacing-xl);
-width: var(--fehris-chat-mobile-chat-width);
-height: var(--fehris-chat-mobile-chat-height);
-transition: all var(--fehris-chat-transition-medium) ease;
-z-index: 1000;
-}
+
 .fehris-chat-close-chat {
 background: none;
 border: none;
@@ -975,12 +988,18 @@ opacity: 0.7;
 background-color: var(--fehris-chat-text-dark);
 transform: none;
 }
+@media (max-width: 480px) { 
+ .fehris-chat-container {
+width: var(--fehris-chat-mobile-chat-width);
+height: var(--fehris-chat-mobile-chat-height);
+ }
+} 
 `;
-function $08c8c30dbc5ff91e$var$$a3c3d38faa6c4170$export$3b08d3ae7d3bc49f() {
+function $08c8c30dbc5ff91e$var$$a3c3d38faa6c4170$export$3b08d3ae7d3bc49f(languageCode) {
     (function injectHTML() {
         const html = `
     <button id="fehris-chat-toggle" class="fehris-chat-toggle-button"><svg width="22" height="22" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M5.856 17.121a.979.979 0 0 1-.327-.06.839.839 0 0 1-.283-.177.739.739 0 0 1-.187-.255.724.724 0 0 1-.07-.303l-.02-1.609a4.663 4.663 0 0 1-1.446-.455 4.252 4.252 0 0 1-.637-.401c-.199-.146-.385-.31-.553-.492a4.442 4.442 0 0 1-.45-.577 4.303 4.303 0 0 1-.327-.637 3.823 3.823 0 0 1-.206-.686 3.729 3.729 0 0 1-.064-.704V6.478c0-.261.025-.516.077-.771a4.43 4.43 0 0 1 .244-.747 4.062 4.062 0 0 1 .932-1.28c.2-.183.418-.347.65-.493.23-.145.482-.267.739-.364a4.21 4.21 0 0 1 .81-.225c.27-.054.553-.078.835-.078H8.55c.103 0 .2.018.29.054a.7.7 0 0 1 .411.376.667.667 0 0 1-.161.766.736.736 0 0 1-.25.151.764.764 0 0 1-.29.055H5.573c-.186 0-.366.012-.54.049-.18.03-.353.079-.52.145-.167.061-.328.14-.482.237-.148.091-.29.2-.418.316a2.897 2.897 0 0 0-.347.388c-.097.14-.187.286-.257.444a2.473 2.473 0 0 0-.206.977v4.287c0 .17.013.333.051.503a2.549 2.549 0 0 0 .772 1.33 2.721 2.721 0 0 0 .913.559c.167.066.347.115.527.152.18.03.36.048.546.048a.904.904 0 0 1 .61.23.848.848 0 0 1 .194.262.84.84 0 0 1 .07.303l.007.99 1.915-1.293a2.877 2.877 0 0 1 1.64-.492h2.372c.186 0 .366-.018.54-.048.18-.03.353-.08.52-.146.168-.067.329-.146.483-.237.148-.091.29-.2.418-.316.128-.121.244-.249.347-.388a2.8 2.8 0 0 0 .257-.444 2.47 2.47 0 0 0 .206-.977V8.585a.646.646 0 0 1 .225-.492.679.679 0 0 1 .244-.152.814.814 0 0 1 .585 0c.09.03.174.085.244.152a.657.657 0 0 1 .225.492V10.8c0 .261-.032.516-.083.771a4.192 4.192 0 0 1-.245.74c-.109.244-.244.468-.398.687a3.735 3.735 0 0 1-.534.6c-.2.183-.418.347-.65.493a4.134 4.134 0 0 1-.738.364 4.7 4.7 0 0 1-.81.225c-.27.054-.553.079-.836.079h-1.877c-.604 0-1.144.164-1.633.491l-2.54 1.713a.913.913 0 0 1-.514.157z" fill="currentColor"></path> <path d="M15.866 4.125h-4.174c-.41 0-.741.313-.741.7 0 .387.332.7.741.7h4.174c.41 0 .742-.313.742-.7 0-.387-.332-.7-.742-.7z" fill="currentColor" ></path> <path d="M14.537 2.932c0-.396-.34-.717-.759-.717s-.758.32-.758.717v3.786c0 .396.34.717.758.717.42 0 .76-.321.76-.717V2.932z" fill="currentColor"></path></svg></button>
-    <div class="fehris-chat-container" id="fehris-chat-container" style="display: none"><div class="fehris-chat-header"><div class="fehris-chat-bot-status"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 0 0 2.25-2.25V6.75a2.25 2.25 0 0 0-2.25-2.25H6.75A2.25 2.25 0 0 0 4.5 6.75v10.5a2.25 2.25 0 0 0 2.25 2.25Zm.75-12h9v9h-9v-9Z"/></svg></div><h2>Chatbot Assistant</h2><button class="fehris-chat-close-chat" id="fehris-chat-close-chat">\xd7</button></div><div class="fehris-chat-messages" id="fehris-chat-messages"><div class="fehris-chat-message fehris-chat-bot-message"><div class="fehris-chat-message-content">Hi! How can I help you today?</div><div class="fehris-chat-message-time">Just now</div></div></div><div class="fehris-chat-input"> <input type="text" id="fehris-chat-user-input" placeholder="Type your message here..." autocomplete="off"/><button id="fehris-chat-send-button">Send</button></div></div>
+    <div class="fehris-chat-container" id="fehris-chat-container" style="display: none"><div class="fehris-chat-header"><div class="fehris-chat-bot-status"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 0 0 2.25-2.25V6.75a2.25 2.25 0 0 0-2.25-2.25H6.75A2.25 2.25 0 0 0 4.5 6.75v10.5a2.25 2.25 0 0 0 2.25 2.25Zm.75-12h9v9h-9v-9Z"/></svg></div><h2>${languageCode === "ar" ? "\u0645\u0633\u0627\u0639\u062F \u0627\u0644\u062F\u0631\u062F\u0634\u0629 \u0627\u0644\u0622\u0644\u064A\u0629" : "Chatbot Assistant"}</h2><button class="fehris-chat-close-chat" id="fehris-chat-close-chat">\xd7</button></div><div class="fehris-chat-messages" id="fehris-chat-messages"><div class="fehris-chat-message fehris-chat-bot-message"><div class="fehris-chat-message-content">${languageCode === "ar" ? "\u0645\u0631\u062D\u0628\u064B\u0627! \u0643\u064A\u0641 \u064A\u0645\u0643\u0646\u0646\u064A \u0645\u0633\u0627\u0639\u062F\u062A\u0643 \u0627\u0644\u064A\u0648\u0645\u061F" : "Hi! How can I help you today?"}</div><div class="fehris-chat-message-time">${languageCode === "ar" ? "\u0627\u0644\u0622\u0646" : "Just now"}</div></div></div><div class="fehris-chat-input"> <input type="text" id="fehris-chat-user-input"  ${languageCode === "ar" ? 'placeholder="\u0627\u0643\u062A\u0628 \u0631\u0633\u0627\u0644\u062A\u0643 \u0647\u0646\u0627..."' : 'placeholder="Type your message here..."'} autocomplete="off"/><button id="fehris-chat-send-button">${languageCode === "ar" ? "\u0627\u0631\u0633\u0627\u0644" : "Send"}</button></div></div>
   `;
         const container = document.createElement("div");
         container.innerHTML = html;
@@ -995,8 +1014,8 @@ function $08c8c30dbc5ff91e$var$$a3c3d38faa6c4170$export$3b08d3ae7d3bc49f() {
 (function(initFehrisChat, undefined) {
     const init = (config)=>{
         if (config && config.storeId) localStorage.setItem("fehrisStoreId", config.storeId);
-        $08c8c30dbc5ff91e$var$$a3c3d38faa6c4170$export$3b08d3ae7d3bc49f();
-        $08c8c30dbc5ff91e$var$$0102d920810385a3$export$5649e0907eccaff6();
+        $08c8c30dbc5ff91e$var$$a3c3d38faa6c4170$export$3b08d3ae7d3bc49f(config.languageCode);
+        $08c8c30dbc5ff91e$var$$0102d920810385a3$export$5649e0907eccaff6(config.storeId, config.languageCode);
     };
     initFehrisChat.init = init;
 })(window.initFehrisChat = window.initFehrisChat || {}); //# sourceMappingURL=main.js.map
